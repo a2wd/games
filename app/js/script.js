@@ -2,6 +2,8 @@ var canvas = document.getElementById("canvas")
 var context = canvas.getContext("2d")
 
 var gameIsNotOver = true
+var lastFrame = null
+var redrawSpeed = 100
 
 var speed = 1
 var height = 10
@@ -16,7 +18,7 @@ var arrowKeys = {
 	40: "down"
 }
 
-var direction = null;
+var direction = "up";
 
 function setupKeystrokeListeners() {
 	window.addEventListener("keydown", function(event) {
@@ -72,24 +74,35 @@ function drawGame() {
 	updateMovement()
 
 	if(x < 0) {
-		x = canvas.width
+		x = canvas.width - width
 	}
 
-	if(x > canvas.width) {
+	if(x >= canvas.width) {
 		x = 0
 	}
 
 	if(y < 0) {
-		y = canvas.height
+		y = canvas.height - height
 	}
 
-	if(y > canvas.height) {
+	if(y >= canvas.height) {
 		y = 0
 	}
 }
 
+function readyForNextFrame(timestamp) {
+	if(lastFrame === null || timestamp - lastFrame > redrawSpeed) {
+		lastFrame = timestamp
+		return true
+	}
+
+	return false
+}
+
 function gameLoop(timestamp) {
-	drawGame()
+	if(readyForNextFrame(timestamp)) {
+		drawGame()
+	}
 
 	if(gameIsNotOver) {
 		window.requestAnimationFrame(gameLoop)

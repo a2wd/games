@@ -4,6 +4,7 @@ var context = canvas.getContext("2d")
 var gameIsNotOver = true
 var lastFrame = null
 var redrawSpeed = 200
+var endGameRedrawSpeed = 200
 
 var speed = 1
 var height = 10
@@ -12,8 +13,6 @@ var width = 10
 var snake = null
 
 var snakeFood = null
-
-var snakeColour = "#88bb77"
 
 var newDirection = null
 
@@ -32,6 +31,8 @@ var oppositeDirection = {
 }
 
 var direction = "up";
+
+var gameOverText = [[20, 20], [20, 30], [20, 40], [20, 50], [20, 60], [30, 20], [30, 60], [40, 20], [40, 50], [40, 60], [60, 20], [60, 30], [60, 40], [60, 50], [60, 60], [70, 20], [70, 40], [80, 20], [80, 30], [80, 40], [80, 50], [80, 60], [80, 80], [80, 90], [80, 100], [80, 110], [80, 120], [90, 80], [90, 120], [100, 20], [100, 30], [100, 40], [100, 50], [100, 60], [100, 80], [100, 90], [100, 100], [100, 110], [100, 120], [110, 30], [110, 170], [110, 180], [110, 210], [120, 40], [120, 80], [120, 90], [120, 100], [120, 110], [120, 200], [130, 30], [130, 120], [130, 200], [140, 20], [140, 30], [140, 40], [140, 50], [140, 60], [140, 80], [140, 90], [140, 100], [140, 110], [140, 170], [140, 180], [140, 210], [160, 20], [160, 30], [160, 40], [160, 50], [160, 60], [160, 80], [160, 90], [160, 100], [160, 110], [160, 120], [170, 20], [170, 40], [170, 60], [170, 80], [170, 100], [170, 120], [180, 20], [180, 60], [180, 80], [180, 120], [200, 80], [200, 90], [200, 100], [200, 110], [200, 120], [210, 80], [210, 100], [220, 80], [220, 90], [220, 110], [220, 120]].reverse()
 
 function setupKeystrokeListeners(snakeHead) {
 	window.addEventListener("keydown", function(event) {
@@ -86,6 +87,9 @@ var segment = function(x, y, direction = "up") {
 		x: x,
 		y: y
 	}
+
+	var liveSnakeColour = "#88bb77"
+	var deadSnakeColour = "#222222"
 
 	var nextSegment = null
 
@@ -144,9 +148,30 @@ var segment = function(x, y, direction = "up") {
 		}	
 	}
 
-	var drawSegment = function() {
-		context.fillStyle = snakeColour
+	var drawSegment = function(isDead) {
+		context.fillStyle = liveSnakeColour
+
+		if(isDead) {
+			context.fillStyle = deadSnakeColour
+		}
+
 		context.fillRect(position.x, position.y, width, height)
+	}
+
+	this.hasCollidedWithSelf = function(headX, headY) {
+		if(typeof headX === "undefined" || typeof headY === "undefined") {
+			return nextSegment.hasCollidedWithSelf(position.x, position.y)
+		}
+
+		if(position.x === headX && position.y === headY) {
+			return true
+		}
+
+		if(nextSegment !== null) {
+			return nextSegment.hasCollidedWithSelf(headX, headY)
+		}
+
+		return false
 	}
 
 	this.addSegment = function(x, y) {
@@ -176,6 +201,10 @@ var segment = function(x, y, direction = "up") {
 
 		if(typeof headX === "undefined" || typeof headY === "undefined") {
 			updatePosition()
+
+			if(this.hasCollidedWithSelf()) {
+				gameIsNotOver = false
+			}
 		}
 		else {
 			position.x = headX
@@ -183,6 +212,14 @@ var segment = function(x, y, direction = "up") {
 		}
 
 		drawSegment()
+	}
+
+	this.drawDeath = function() {
+		drawSegment(true)
+
+		if(nextSegment != null) {
+			nextSegment.drawDeath()
+		}
 	}
 
 	this.setDirection = function(newDirection) {
@@ -240,13 +277,32 @@ function drawGame() {
 	snake.move()
 }
 
-function readyForNextFrame(timestamp) {
-	if(lastFrame === null || timestamp - lastFrame > redrawSpeed) {
+function readyForNextFrame(timestamp, isEndGame) {
+	var currentRedrawSpeed = isEndGame ? endGameRedrawSpeed : redrawSpeed
+
+	if(lastFrame === null || timestamp - lastFrame > currentRedrawSpeed) {
 		lastFrame = timestamp
 		return true
 	}
 
 	return false
+}
+
+function gameOver(timestamp) {
+	if(gameOverText.length > 0) {
+		if(readyForNextFrame(timestamp, true)) {
+			context.fillStyle = "rebeccapurple"
+
+			var pixel = gameOverText.pop()
+			context.fillRect(pixel[0], pixel[1], width, height)
+		}
+
+		if(gameOverText.length % 2 === 0) {
+			endGameRedrawSpeed -= 1
+		}
+
+		window.requestAnimationFrame(gameOver)
+	}
 }
 
 (function gameLoop(timestamp) {
@@ -256,5 +312,9 @@ function readyForNextFrame(timestamp) {
 
 	if(gameIsNotOver) {
 		window.requestAnimationFrame(gameLoop)
+	}
+	else {
+		snake.drawDeath()
+		window.requestAnimationFrame(gameOver)
 	}
 })(null)

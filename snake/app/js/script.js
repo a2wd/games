@@ -13,6 +13,8 @@ var snake = null
 
 var snakeColour = "#aa33dd"
 
+var newDirection = null
+
 var arrowKeys = {
 	37: "left",
 	38: "up",
@@ -32,7 +34,7 @@ var direction = "up";
 function setupKeystrokeListeners(snakeHead) {
 	window.addEventListener("keydown", function(event) {
 		if(arrowKeys.hasOwnProperty(event.keyCode)) {
-			snakeHead.setDirection(arrowKeys[event.keyCode])
+			newDirection = arrowKeys[event.keyCode]
 		}
 	})
 }
@@ -155,6 +157,11 @@ function drawGame() {
 		snake.addSegment()
 		snake.addSegment()
 		setupKeystrokeListeners(snake)
+	}
+
+	if(newDirection !== null) {
+		snake.setDirection(newDirection)
+		newDirection = null
 	}
 
 	snake.move()

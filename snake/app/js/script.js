@@ -20,13 +20,19 @@ var arrowKeys = {
 	40: "down"
 }
 
+var oppositeDirection = {
+	"up": "down",
+	"down": "up",
+	"left": "right",
+	"right": "left"
+}
+
 var direction = "up";
 
 function setupKeystrokeListeners(snakeHead) {
 	window.addEventListener("keydown", function(event) {
 		if(arrowKeys.hasOwnProperty(event.keyCode)) {
-			console.log(snakeHead)
-			snakeHead.direction = arrowKeys[event.keyCode]
+			snakeHead.setDirection(arrowKeys[event.keyCode])
 		}
 	})
 }
@@ -39,7 +45,7 @@ var segment = function(x, y, direction = "up") {
 
 	var nextSegment = null
 
-	this.direction = direction
+	var direction = direction
 
 	var updatePosition = function() {
 		moveToNextSpace()
@@ -96,12 +102,25 @@ var segment = function(x, y, direction = "up") {
 		nextSegment = new segment(position.x, position.y + height)
 	}
 
-	this.move = function() {
-		updatePosition()
-		drawSegment()
+	this.move = function(headX, headY) {
+		if(nextSegment != null) {
+			nextSegment.move(position.x, position.y)
+		}
 
-		if(nextSegment !== null) {
-			nextSegment.move()
+		if(typeof headX === "undefined" || typeof headY === "undefined") {
+			updatePosition()
+		}
+		else {
+			position.x = headX
+			position.y = headY
+		}
+
+		drawSegment()
+	}
+
+	this.setDirection = function(newDirection) {
+		if(oppositeDirection[newDirection] !== direction) {
+			direction = newDirection
 		}
 	}
 }

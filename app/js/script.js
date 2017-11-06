@@ -44,10 +44,6 @@ var segment = function(x, y, direction = "up") {
 	var updatePosition = function() {
 		moveToNextSpace()
 		loopPositionAtEdges()
-
-		if(nextSegment !== null) {
-			nextSegment.updatePosition()
-		}
 	}
 
 	var moveToNextSpace = function() {
@@ -97,12 +93,16 @@ var segment = function(x, y, direction = "up") {
 			return
 		}
 
-		nextSegment = new segment(position.x - 1, position.y - 1)
+		nextSegment = new segment(position.x, position.y + height)
 	}
 
 	this.move = function() {
 		updatePosition()
 		drawSegment()
+
+		if(nextSegment !== null) {
+			nextSegment.move()
+		}
 	}
 }
 
@@ -133,6 +133,8 @@ function drawGame() {
 		var y = (canvas.height / 2)
 
 		snake = new segment(x, y)
+		snake.addSegment()
+		snake.addSegment()
 		setupKeystrokeListeners(snake)
 	}
 

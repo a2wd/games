@@ -11,7 +11,9 @@ var width = 10
 
 var snake = null
 
-var snakeColour = "#aa33dd"
+var snakeFood = null
+
+var snakeColour = "#88bb77"
 
 var newDirection = null
 
@@ -37,6 +39,42 @@ function setupKeystrokeListeners(snakeHead) {
 			newDirection = arrowKeys[event.keyCode]
 		}
 	})
+}
+
+var food = function() {
+
+	var foodColour = "#ee2233"
+
+	var rowsInGrid = canvas.height / height
+	var columnsInGrid = canvas.width / width
+
+	var getPosition = function(availablePositions, gridSpacing) {
+		return Math.floor(Math.random() * availablePositions) * gridSpacing
+	}
+
+	var getX = function() {
+		return getPosition(rowsInGrid, height)
+	}
+
+	var getY = function() {
+		return getPosition(columnsInGrid, width)
+	}
+
+	var position = {
+		x: getX(),
+		y: getY()
+	}
+
+	this.draw = function() {
+		context.fillStyle = foodColour
+		context.fillRect(position.x, position.y, width, height)
+	}
+}
+
+function dropFoodAtRandomIntervals() {
+	if(Math.random() < 0.05) {
+		snakeFood = new food()
+	}
 }
 
 var segment = function(x, y, direction = "up") {
@@ -157,6 +195,14 @@ function drawGame() {
 		snake.addSegment()
 		snake.addSegment()
 		setupKeystrokeListeners(snake)
+	}
+
+	if(snakeFood === null) {
+		dropFoodAtRandomIntervals()
+	}
+
+	if(snakeFood !== null) {
+		snakeFood.draw()
 	}
 
 	if(newDirection !== null) {

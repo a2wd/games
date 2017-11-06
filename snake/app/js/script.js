@@ -8,8 +8,10 @@ var redrawSpeed = 100
 var speed = 1
 var height = 10
 var width = 10
-var x = (canvas.width / 2)
-var y = (canvas.height / 2)
+
+var snake = null
+
+var snakeColour = "#aa33dd"
 
 var arrowKeys = {
 	37: "left",
@@ -20,29 +22,87 @@ var arrowKeys = {
 
 var direction = "up";
 
-function setupKeystrokeListeners() {
+function setupKeystrokeListeners(snakeHead) {
 	window.addEventListener("keydown", function(event) {
 		if(arrowKeys.hasOwnProperty(event.keyCode)) {
-			direction = arrowKeys[event.keyCode]
+			console.log(snakeHead)
+			snakeHead.direction = arrowKeys[event.keyCode]
 		}
 	})
 }
 
-function updateMovement() {
-	if(direction === "up") {
-		y -= height
+var segment = function(x, y, direction = "up") {
+	var position = {
+		x: x,
+		y: y
 	}
 
-	if(direction === "down") {
-		y += height
+	var nextSegment = null
+
+	this.direction = direction
+
+	var updatePosition = function() {
+		moveToNextSpace()
+		loopPositionAtEdges()
 	}
 
-	if(direction === "left") {
-		x -= width
+	var moveToNextSpace = function() {
+		if(direction === "up") {
+			position.y -= height
+		}
+
+		if(direction === "down") {
+			position.y += height
+		}
+
+		if(direction === "left") {
+			position.x -= width
+		}
+
+		if(direction === "right") {
+			position.x += width
+		}	
 	}
 
-	if(direction === "right") {
-		x += width
+	var loopPositionAtEdges = function() {
+		if(position.x < 0) {
+			position.x = canvas.width - width
+		}
+
+		if(position.x >= canvas.width) {
+			position.x = 0
+		}
+
+		if(position.y < 0) {
+			position.y = canvas.height - height
+		}
+
+		if(position.y >= canvas.height) {
+			position.y = 0
+		}	
+	}
+
+	var drawSegment = function() {
+		context.fillStyle = snakeColour
+		context.fillRect(position.x, position.y, width, height)
+	}
+
+	this.addSegment = function() {
+		if(nextSegment !== null) {
+			nextSegment.addSegment()
+			return
+		}
+
+		nextSegment = new segment(position.x, position.y + height)
+	}
+
+	this.move = function() {
+		updatePosition()
+		drawSegment()
+
+		if(nextSegment !== null) {
+			nextSegment.move()
+		}
 	}
 }
 
@@ -66,28 +126,19 @@ function drawGrid() {
 function drawGame() {
 	context.clearRect(0, 0, canvas.width, canvas.height)
 
-	context.fillStyle = "#aa33dd"
-	context.fillRect(x, y, width, height)
-
 	drawGrid()
 
-	updateMovement()
+	if(snake === null) {
+		var x = (canvas.width / 2)
+		var y = (canvas.height / 2)
 
-	if(x < 0) {
-		x = canvas.width - width
+		snake = new segment(x, y)
+		snake.addSegment()
+		snake.addSegment()
+		setupKeystrokeListeners(snake)
 	}
 
-	if(x >= canvas.width) {
-		x = 0
-	}
-
-	if(y < 0) {
-		y = canvas.height - height
-	}
-
-	if(y >= canvas.height) {
-		y = 0
-	}
+	snake.move()
 }
 
 function readyForNextFrame(timestamp) {
@@ -99,7 +150,7 @@ function readyForNextFrame(timestamp) {
 	return false
 }
 
-function gameLoop(timestamp) {
+(function gameLoop(timestamp) {
 	if(readyForNextFrame(timestamp)) {
 		drawGame()
 	}
@@ -107,7 +158,4 @@ function gameLoop(timestamp) {
 	if(gameIsNotOver) {
 		window.requestAnimationFrame(gameLoop)
 	}
-}
-
-setupKeystrokeListeners()
-window.requestAnimationFrame(gameLoop)
+})(null)

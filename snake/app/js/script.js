@@ -3,7 +3,7 @@ var context = canvas.getContext("2d")
 
 var gameIsNotOver = true
 var lastFrame = null
-var redrawSpeed = 100
+var redrawSpeed = 200
 
 var speed = 1
 var height = 10
@@ -65,6 +65,10 @@ var food = function() {
 		y: getY()
 	}
 
+	this.isAtPosition = function(x, y) {
+		return position.x === x && position.y === y
+	}
+
 	this.draw = function() {
 		context.fillStyle = foodColour
 		context.fillRect(position.x, position.y, width, height)
@@ -90,6 +94,18 @@ var segment = function(x, y, direction = "up") {
 	var updatePosition = function() {
 		moveToNextSpace()
 		loopPositionAtEdges()
+	}
+
+	var hasEatenFood = function() {
+		if(snakeFood === null) {
+			return false
+		}
+
+		if(snakeFood.isAtPosition(position.x, position.y)) {
+			return true
+		}
+
+		return false
 	}
 
 	var moveToNextSpace = function() {
@@ -133,18 +149,29 @@ var segment = function(x, y, direction = "up") {
 		context.fillRect(position.x, position.y, width, height)
 	}
 
-	this.addSegment = function() {
+	this.addSegment = function(x, y) {
 		if(nextSegment !== null) {
 			nextSegment.addSegment()
 			return
 		}
 
-		nextSegment = new segment(position.x, position.y + height)
+		if(typeof x === "undefined" || typeof y === "undefined") {
+			nextSegment = new segment(position.x, position.y + height)
+		}
+		else {
+			nextSegment = new segment(x, y)
+		}
 	}
 
-	this.move = function(headX, headY) {
+	this.move = function(headX, headY, shouldGrowBody) {
+		var shouldAddASegment = shouldGrowBody || hasEatenFood()
+
 		if(nextSegment != null) {
-			nextSegment.move(position.x, position.y)
+			nextSegment.move(position.x, position.y, shouldAddASegment)
+		}
+		else if(shouldAddASegment === true) {
+			this.addSegment(position.x, position.y)
+			snakeFood = null
 		}
 
 		if(typeof headX === "undefined" || typeof headY === "undefined") {
